@@ -17,10 +17,10 @@ on:
 jobs:
   make:
     name: Make NDK Bionic
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-25.04
     env:
       ROOTDIR: ${{github.workspace}}
-      ANDROID_PLATFORM: 25
+      ANDROID_PLATFORM: 26
     strategy:
       fail-fast: false
       matrix:
