@@ -17,7 +17,7 @@ on:
 jobs:
   make:
     name: Make NDK Bionic
-    runs-on: ubuntu-25.04
+    runs-on: ubuntu-latest
     env:
       ROOTDIR: ${{github.workspace}}
       ANDROID_PLATFORM: 26
