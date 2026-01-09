@@ -21,11 +21,6 @@ jobs:
     env:
       ROOTDIR: ${{github.workspace}}
       ANDROID_PLATFORM: 26
-    strategy:
-      fail-fast: false
-      matrix:
-        # riscv64-linux-android
-        target: [aarch64-linux-android]
     steps:
       - name: Checkout android-ndk-custom
         uses: actions/checkout@v5
@@ -46,11 +41,7 @@ jobs:
 
       - name: Build Extra Dependencies
         run: |
-          if [ "${{ matrix.target }}" = "riscv64-linux-android" ]; then
-            ANDROID_PLATFORM=35
-          else
-            ANDROID_PLATFORM=${ANDROID_PLATFORM}
-          fi
+          ANDROID_PLATFORM=${ANDROID_PLATFORM}
           HAVE_PSELECT=yes
 
           NDK_DIR="${{ runner.temp }}/android-ndk-r${{inputs.version}}${{inputs.revision}}"
@@ -72,16 +63,16 @@ jobs:
           cd make
           cp ${{github.workspace}}/config/config.sub build-aux
           cp ${{github.workspace}}/config/config.guess build-aux
-          # if [ "${{ matrix.target }}" = "armv7a-linux-androideabi" ]; then
+          # if [ "aarch64-linux-android" = "armv7a-linux-androideabi" ]; then
           #     HAVE_PSELECT=no
           # fi
           ./configure \
           --prefix="${PWD}/build" \
           --build=x86_64-linux-gnu \
-          --host=${{ matrix.target }} \
+          --host=aarch64-linux-android \
           --disable-posix-spawn \
-          CC=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang \
-          CXX=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang++ \
+          CC=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang \
+          CXX=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang++ \
           LD=${TOOLCHAIN}/bin/ld \
           OBJCOPY=${TOOLCHAIN}/bin/llvm-objcopy \
           AR=${TOOLCHAIN}/bin/llvm-ar \
@@ -105,10 +96,10 @@ jobs:
           ./configure \
           --prefix="${PWD}/build" \
           --build=x86_64-linux-gnu \
-          --host=${{ matrix.target }} \
+          --host=aarch64-linux-android \
           --disable-nls \
-          CC=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang \
-          CXX=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang++ \
+          CC=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang \
+          CXX=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang++ \
           LD=${TOOLCHAIN}/bin/ld \
           OBJCOPY=${TOOLCHAIN}/bin/llvm-objcopy \
           AR=${TOOLCHAIN}/bin/llvm-ar \
@@ -152,9 +143,9 @@ jobs:
             -DCMAKE_EXE_LINKER_FLAGS="-static" \
             -DCMAKE_CROSSCOMPILING=True \
             -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_C_COMPILER="${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang" \
-            -DCMAKE_CXX_COMPILER="${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang++" \
-            -DCMAKE_ASM_COMPILER="${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang" \
+            -DCMAKE_C_COMPILER="${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang" \
+            -DCMAKE_CXX_COMPILER="${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang++" \
+            -DCMAKE_ASM_COMPILER="${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang" \
             -DCMAKE_LINKER="${TOOLCHAIN}/bin/ld" \
             -DCMAKE_OBJCOPY="${TOOLCHAIN}/bin/llvm-objcopy" \
             -DCMAKE_AR="${TOOLCHAIN}/bin/llvm-ar" \
@@ -182,18 +173,18 @@ jobs:
           ' configure
           ./configure --prefix="${PWD}/build" \
           --build=x86_64-linux-gnu \
-          --host=${{ matrix.target }} \
+          --host=aarch64-linux-android \
           --disable-shared \
           --disable-ipv6 \
           --with-build-python \
           --without-ensurepip \
           CONFIG_SITE=config.site \
           TOOLCHAIN="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" \
-          TARGET="${{ matrix.target }}" \
+          TARGET="aarch64-linux-android" \
           API="${ANDROID_PLATFORM}" \
-          CC=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang \
-          AS=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang \
-          CXX=${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang++ \
+          CC=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang \
+          AS=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang \
+          CXX=${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang++ \
           LD=${TOOLCHAIN}/bin/ld \
           OBJCOPY=${TOOLCHAIN}/bin/llvm-objcopy \
           READELF=$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf \
@@ -201,10 +192,10 @@ jobs:
           AR=${TOOLCHAIN}/bin/llvm-ar \
           RANLIB=${TOOLCHAIN}/bin/llvm-ranlib \
           STRIP=${TOOLCHAIN}/bin/llvm-strip \
-          LD_LIBRARY_PATH="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/${{matrix.target}}" \
-          LDSHARED="${TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang -shared -fPIC" \
-          _PYTHON_HOST_PLATFORM="${{ matrix.target }}"
-          make -j"$(nproc --all)" build_all || echo "WARNING: issue in building python for ${{ matrix.target }}"
+          LD_LIBRARY_PATH="$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android" \
+          LDSHARED="${TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang -shared -fPIC" \
+          _PYTHON_HOST_PLATFORM="aarch64-linux-android"
+          make -j"$(nproc --all)" build_all || echo "WARNING: issue in building python for aarch64-linux-android"
           make install
 
           # Manually strip binaries
@@ -219,14 +210,14 @@ jobs:
           done
 
       - name: Get LLVM
-        run: curl -LkSs https://github.com/HomuHomu833/llvm-custom/releases/download/llvm-r${{inputs.version}}/bolt+clang+clang-tools-extra+lld-r${{inputs.version}}${{inputs.revision}}-${{matrix.target}}.tar.xz | tar -xJf -
+        run: curl -LkSs https://github.com/${{ github.repository_owner }}/llvm-custom/releases/download/llvm-r${{inputs.version}}/bolt+clang+clang-tools-extra+lld-r${{inputs.version}}${{inputs.revision}}-aarch64-linux-android.tar.xz | tar -xJf -
 
       - name: Make NDK Bionic
         run: |
           NDK="${{ runner.temp }}/android-ndk-r${{inputs.version}}${{inputs.revision}}"
-          HOST_TOOLCHAIN="${PWD}/bolt+clang+clang-tools-extra+lld-r${{inputs.version}}${{inputs.revision}}-${{matrix.target}}"
+          HOST_TOOLCHAIN="${PWD}/bolt+clang+clang-tools-extra+lld-r${{inputs.version}}${{inputs.revision}}-aarch64-linux-android"
           NDK_TOOLCHAIN="${NDK}/toolchains/llvm/prebuilt/linux-x86_64"
-          CC="${NDK_TOOLCHAIN}/bin/${{matrix.target}}${ANDROID_PLATFORM}-clang"
+          CC="${NDK_TOOLCHAIN}/bin/aarch64-linux-android${ANDROID_PLATFORM}-clang"
 
           $CC $CFLAGS ${{ github.workspace }}/sources/portable_cmp.c -o ${NDK}/prebuilt/linux-x86_64/bin/cmp
           $CC $CFLAGS ${{ github.workspace }}/sources/portable_echo.c -o ${NDK}/prebuilt/linux-x86_64/bin/echo
@@ -296,36 +287,27 @@ jobs:
 
           rm -rf "${NDK}/shader-tools/linux-x86_64/libc++.so"
 
-          if [[ "${{ matrix.target }}" != "x86_64-linux-android" ]]; then
-            ARCH="${{ matrix.target }}"
-            ARCH="${ARCH%%-*}"
+          ARCH="arm64"
 
-            case "$ARCH" in
-                aarch64)     ARCH="arm64" ;;
-                armv7a)     ARCH="arm" ;;
-                i686)     ARCH="x86" ;;
-            esac
+          mv "${NDK}/prebuilt/linux-x86_64" "${NDK}/prebuilt/linux-${ARCH}"
+          mv "${NDK}/toolchains/llvm/prebuilt/linux-x86_64" "${NDK}/toolchains/llvm/prebuilt/linux-${ARCH}"
+          mv "${NDK}/shader-tools/linux-x86_64" "${NDK}/shader-tools/linux-${ARCH}"
 
-            mv "${NDK}/prebuilt/linux-x86_64" "${NDK}/prebuilt/linux-${ARCH}"
-            mv "${NDK}/toolchains/llvm/prebuilt/linux-x86_64" "${NDK}/toolchains/llvm/prebuilt/linux-${ARCH}"
-            mv "${NDK}/shader-tools/linux-x86_64" "${NDK}/shader-tools/linux-${ARCH}"
+          cd ${NDK}/toolchains/llvm/prebuilt
+          ln -s linux-${ARCH} linux-x86_64
+          cd ${NDK}/prebuilt
+          ln -s linux-${ARCH} linux-x86_64
+          cd ${NDK}/shader-tools
+          ln -s linux-${ARCH} linux-x86_64
 
-            cd ${NDK}/toolchains/llvm/prebuilt
-            ln -s linux-${ARCH} linux-x86_64
-            cd ${NDK}/prebuilt
-            ln -s linux-${ARCH} linux-x86_64
-            cd ${NDK}/shader-tools
-            ln -s linux-${ARCH} linux-x86_64
-
-            for file in \
-                ${NDK}/ndk-gdb \
-                ${NDK}/ndk-lldb \
-                ${NDK}/ndk-stack \
-                ${NDK}/ndk-which
-            do
-                sed -i "s|linux-x86_64|linux-${ARCH}|g" $file
-            done
-          fi
+          for file in \
+              ${NDK}/ndk-gdb \
+              ${NDK}/ndk-lldb \
+              ${NDK}/ndk-stack \
+              ${NDK}/ndk-which
+          do
+              sed -i "s|linux-x86_64|linux-${ARCH}|g" $file
+          done
 
           sed -i -E '/^if\(CMAKE_HOST_SYSTEM_NAME STREQUAL Linux\)$/,/^endif\(\)$/c\
           if(CMAKE_HOST_SYSTEM_NAME STREQUAL Linux OR CMAKE_HOST_SYSTEM_NAME STREQUAL Android)\
@@ -377,15 +359,15 @@ jobs:
       - name: Archive
         run: |
           cd ${{ runner.temp }}
-          tar -cf - android-ndk-r${{inputs.version}}${{inputs.revision}} | xz -T0 -9e --lzma2=dict=256MiB > android-ndk-r${{inputs.version}}${{inputs.revision}}-${{matrix.target}}.tar.xz
-          mv android-ndk-r${{inputs.version}}${{inputs.revision}}-${{matrix.target}}.tar.xz ${{ github.workspace }}
+          tar -cf - android-ndk-r${{inputs.version}}${{inputs.revision}} | xz -T0 -9e --lzma2=dict=256MiB > android-ndk-r${{inputs.version}}${{inputs.revision}}-aarch64-linux-android.tar.xz
+          mv android-ndk-r${{inputs.version}}${{inputs.revision}}-aarch64-linux-android.tar.xz ${{ github.workspace }}
 
       - name: Release
         uses: ncipollo/release-action@v1.20.0
         with:
           name: "r${{inputs.version}}${{inputs.revision}}"
           tag: "r${{inputs.version}}"
-          artifacts: android-ndk-r${{inputs.version}}${{inputs.revision}}-${{matrix.target}}.tar.xz
+          artifacts: android-ndk-r${{inputs.version}}${{inputs.revision}}-aarch64-linux-android.tar.xz
           allowUpdates: true
           replacesArtifacts: true
           body: ''
